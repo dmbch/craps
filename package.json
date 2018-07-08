@@ -1,0 +1,107 @@
+{
+  "name": "craps",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "ava --verbose",
+    "lint": "eslint --ignore-path .gitignore '**/*.js'",
+    "fmt": "prettier --write --ignore-path .gitignore '**/*.js'",
+    "release": "standard-version",
+    "update": "yarn upgrade-interactive --latest",
+    "reset": "git clean -dfx && yarn",
+    "commitmsg": "commitlint -e $GIT_PARAMS",
+    "precommit": "lint-staged",
+    "postrelease": "git push --follow-tags; npm publish"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dmbch/craps.git"
+  },
+  "author": "dmbch",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dmbch/craps/issues"
+  },
+  "homepage": "https://github.com/dmbch/craps#readme",
+  "devDependencies": {
+    "@commitlint/cli": "^7.0.0",
+    "@commitlint/config-conventional": "^7.0.0",
+    "@commitlint/travis-cli": "^7.0.0",
+    "ava": "^0.25.0",
+    "babel-eslint": "^8.2.5",
+    "cz-conventional-changelog": "^2.1.0",
+    "eslint": "^5.0.0",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-plugin-prettier": "^2.6.0",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.0.0",
+    "prettier": "^1.13.4",
+    "standard-version": "^4.2.0"
+  },
+  "renovate": {
+    "extends": [
+      "config:base"
+    ],
+    "ignoreDeps": [
+      "prettier"
+    ],
+    "lockFileMaintenance": {
+      "enabled": true
+    },
+    "pinVersions": false,
+    "prCreation": "not-pending",
+    "semanticCommits": true,
+    "semanticPrefix": "chore:"
+  },
+  "prettier": {
+    "arrowParens": "always",
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "proseWrap": "never"
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint:recommended",
+      "prettier"
+    ],
+    "plugins": [
+      "prettier"
+    ],
+    "rules": {
+      "prettier/prettier": "error"
+    },
+    "env": {
+      "node": true,
+      "es6": true
+    },
+    "parser": "babel-eslint",
+    "parserOptions": {
+      "ecmaVersion": 2018
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "scope-empty": [
+        2,
+        "always"
+      ]
+    }
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}
