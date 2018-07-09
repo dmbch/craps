@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://raw.githubusercontent.com/dmbch/craps/master/schemas/experiments.json",
+  "definitions": {
+    "experiment": {
+      "title": "Craps Experiment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "condition": {
+          "$ref": "#/definitions/condition"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/variant"
+          }
+        }
+      },
+      "required": ["id", "variants"],
+      "additionalProperties": false
+    },
+    "condition": {
+      "title": "Craps Experiment Condition",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "operator": {
+              "type": "string",
+              "enum": ["&", "-", "|", "^"]
+            },
+            "conditions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/condition"
+              }
+            }
+          },
+          "required": ["operator", "conditions"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "operator": {
+              "type": "string",
+              "enum": ["=", "!", "<", ">"]
+            },
+            "key": {
+              "type": "string"
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          "required": ["operator", "key", "value"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "variant": {
+      "title": "Craps Variant",
+      "type": "object",
+      "properties": {
+        "ratio": {
+          "type": "number",
+          "minimum": 0
+        },
+        "payload": {}
+      },
+      "required": ["ratio", "payload"],
+      "additionalProperties": false
+    }
+  },
+  "title": "Craps Experiment Collection",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/experiment"
+  }
+}

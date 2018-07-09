@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://raw.githubusercontent.com/dmbch/craps/master/schemas/user.json",
+  "title": "Craps User",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string" }
+  },
+  "required": ["id"],
+  "additionalProperties": true
+}
