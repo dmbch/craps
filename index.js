@@ -2,12 +2,22 @@
 
 var Ajv = require('ajv');
 const flatten = require('flat');
-const hash = require('string-hash');
+const crypto = require('crypto');
 
 const validateExperiments = new Ajv().compile(require('./schemas/experiments'));
 const validateUser = new Ajv().compile(require('./schemas/user'));
 
-module.exports = class Craps {
+const assignExperimentStrategy = (experimentName, userId, distribution) => {
+  const hashedExperiment = crypto
+    .createHash('sha256')
+    .update(`${experimentName}|${userId}`)
+    .digest('hex');
+  // TODO: Verify if this operation is safe for very large numbers
+  const numeralRepresentation = parseInt(hashedExperiment, 16);
+  return numeralRepresentation % distribution;
+};
+
+class Craps {
   constructor(experiments, user) {
     if (validateExperiments(experiments)) {
       this.experiments = experiments;
@@ -21,52 +31,74 @@ module.exports = class Craps {
       const errors = JSON.stringify(validateUser.errors, null, 2);
       throw new Error(`invalid user: \n${errors}`);
     }
+    this.now = Date.now();
   }
-  evaluate({ operator, key, value, conditions }) {
+  evaluateConditions(conditions) {
     const { user } = this;
-    switch (operator) {
-      case undefined:
-        return true;
-      case '&':
-        return conditions.every((c) => this.evaluate(c));
-      case '-':
-        return !conditions.some((c) => this.evaluate(c));
-      case '|':
-        return conditions.some((c) => this.evaluate(c));
-      case '^':
-        return conditions.filter((c) => this.evaluate(c)).length === 1;
-      case '=':
-        return user[key] == value;
-      case '!':
-        return user[key] != value;
-      case '<':
-        return user[key] < value;
-      case '>':
-        return user[key] > value;
-    }
-  }
-  execute({ id: eid, variants }) {
-    const { id: uid } = this.user;
-    const remainder =
-      hash(`${eid}|${uid}`) %
-      variants.reduce((result, { ratio }) => result + ratio, 0);
-    let minRemainder = 0;
-    return variants.reduce((result, variant, index) => {
-      const { ratio, payload } = variant;
-      if (remainder >= minRemainder && remainder < (minRemainder += ratio)) {
-        Object.assign(result, { id: `${eid}[${index}]`, payload });
+
+    return conditions.every(({ key, operator, value }) => {
+      switch (operator) {
+        case '=':
+          return user[key] == value;
+        case '!':
+          return user[key] != value;
+        case '<':
+          return user[key] < value;
+        case '>':
+          return user[key] > value;
       }
-      return result;
-    }, {});
+
+      return false;
+    });
   }
-  roll() {
+  checkDates(startDate, endDate) {
+    if (!startDate) {
+      return false;
+    }
+    if (
+      new Date(startDate) <= new Date(this.now) &&
+      (!endDate || this.now < new Date(endDate))
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+  assignExperimentVariant({ name: experimentName, variants }) {
+    const { userId } = this.user;
+
+    const remainder = assignExperimentStrategy(
+      experimentName,
+      userId,
+      variants.reduce((result, { ratio }) => result + ratio, 0)
+    );
+
+    let minRemainder = 0;
+    const assignedVariants = variants.filter((experimentVariant) => {
+      const { ratio } = experimentVariant;
+      return remainder >= minRemainder && remainder < (minRemainder += ratio);
+    });
+
+    if (assignedVariants.length != 1) {
+      const assigmentErrors = JSON.stringify(assignedVariants, null, 2);
+      throw new Error(`experiment assignment failed: \n${assigmentErrors}`);
+    }
+
+    return assignedVariants.pop();
+  }
+  getExperiments() {
     const { experiments } = this;
+
     return experiments
-      .filter(({ condition = {} }) => this.evaluate(condition))
-      .reduce(
-        (result, { id, variants }) =>
-          Object.assign(result, { [id]: this.execute({ id, variants }) }),
-        {}
-      );
+      .filter(({ startDate, endDate }) => this.checkDates(startDate, endDate))
+      .filter(({ conditions = [] }) => this.evaluateConditions(conditions))
+      .reduce((result, experiment) => {
+        const assignedVariant = this.assignExperimentVariant(experiment);
+        return Object.assign(result, {
+          [experiment.name]: assignedVariant.variant,
+        });
+      }, {});
   }
-};
+}
+
+module.exports = Craps;

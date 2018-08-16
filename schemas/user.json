@@ -4,8 +4,8 @@
   "title": "Craps User",
   "type": "object",
   "properties": {
-    "id": { "type": "string" }
+    "userId": { "type": "string" }
   },
-  "required": ["id"],
+  "required": ["userId"],
   "additionalProperties": true
 }
