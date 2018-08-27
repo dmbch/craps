@@ -28,6 +28,7 @@
   "homepage": "https://github.com/dmbch/craps#readme",
   "dependencies": {
     "ajv": "^6.5.2",
+    "big-integer": "^1.6.34",
     "flat": "^4.1.0",
     "string-hash": "^1.1.3"
   },

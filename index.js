@@ -3,6 +3,7 @@
 var Ajv = require('ajv');
 const flatten = require('flat');
 const crypto = require('crypto');
+const bigInt = require('big-integer');
 
 const validateExperiments = new Ajv().compile(require('./schemas/experiments'));
 const validateUser = new Ajv().compile(require('./schemas/user'));
@@ -12,9 +13,10 @@ const assignExperimentStrategy = (experimentName, userId, distribution) => {
     .createHash('sha256')
     .update(`${experimentName}|${userId}`)
     .digest('hex');
-  // TODO: Verify if this operation is safe for very large numbers
-  const numeralRepresentation = parseInt(hashedExperiment, 16);
-  return numeralRepresentation % distribution;
+
+  return bigInt(hashedExperiment, 16)
+    .mod(distribution)
+    .toJSNumber();
 };
 
 class Craps {

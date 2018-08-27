@@ -32,7 +32,7 @@ describe('crabs', () => {
     const craps = new Craps(
       [
         {
-          name: 'foo',
+          name: 'new_shiny_feature',
           hashId: '123abc',
           startDate: yesterday.toISOString(),
           endDate: tomorrow.toISOString(),
@@ -50,14 +50,14 @@ describe('crabs', () => {
     );
 
     const result = craps.getExperiments();
-    expect(result).toEqual({ foo: 'test' });
+    expect(result).toEqual({ new_shiny_feature: 'test' });
   });
 
   it('should assign the user to an experiment with matching conditions', () => {
     const craps = new Craps(
       [
         {
-          name: 'foo',
+          name: 'new_shiny_feature',
           hashId: '123abc',
           startDate: yesterday.toISOString(),
           endDate: tomorrow.toISOString(),
@@ -83,14 +83,14 @@ describe('crabs', () => {
     );
 
     const result = craps.getExperiments();
-    expect(result).toEqual({ foo: 'test' });
+    expect(result).toEqual({ new_shiny_feature: 'test' });
   });
 
   it('should not assign the user to an experiment with not matching conditions', () => {
     const craps = new Craps(
       [
         {
-          name: 'foo',
+          name: 'new_shiny_feature',
           hashId: '123abc',
           startDate: yesterday.toISOString(),
           endDate: tomorrow.toISOString(),
@@ -119,13 +119,13 @@ describe('crabs', () => {
     expect(result).toEqual({});
   });
 
-  describe('with plain userIDs', () => {
-    it('should show less than 5% deviation in experiment assigments for a 50/50 ratio', () => {
+  describe('with increasing plain userIDs', () => {
+    it('should show less than 1% deviation in experiment assigments for a 50/50 ratio', () => {
       const createCraps = (user) =>
         new Craps(
           [
             {
-              name: 'foo',
+              name: 'new_shiny_feature',
               hashId: '123abc',
               startDate: yesterday.toISOString(),
               endDate: tomorrow.toISOString(),
@@ -146,20 +146,22 @@ describe('crabs', () => {
 
       const counters = { bar: 0, baz: 0 };
       for (let i = 0; i < 100000; i++) {
-        let { foo: result } = createCraps({ userId: `${i}` }).getExperiments();
+        let { new_shiny_feature: result } = createCraps({
+          userId: `${i}`,
+        }).getExperiments();
         counters[result]++;
       }
 
-      expect(counters.bar).toBeGreaterThan(50000 * 0.95);
-      expect(counters.bar).toBeLessThan(50000 * 1.05);
+      expect(counters.bar / counters.baz).toBeGreaterThan(0.99);
+      expect(counters.bar / counters.baz).toBeLessThan(1.01);
     });
 
-    it('should show less than 5% deviation in experiment assigments for a 5/10 ratio', () => {
+    it('should show less than 1% deviation in experiment assigments for a 5/10 ratio', () => {
       const createCraps = (user) =>
         new Craps(
           [
             {
-              name: 'foo',
+              name: 'new_shiny_feature',
               hashId: '123abc',
               startDate: yesterday.toISOString(),
               endDate: tomorrow.toISOString(),
@@ -180,42 +182,50 @@ describe('crabs', () => {
 
       const counters = { bar: 0, baz: 0 };
       for (let i = 0; i < 100000; i++) {
-        let { foo: result } = createCraps({ userId: `${i}` }).getExperiments();
+        let { new_shiny_feature: result } = createCraps({
+          userId: `${i}`,
+        }).getExperiments();
         counters[result]++;
       }
 
-      expect(counters.bar).toBeGreaterThan((counters.baz / 2) * 0.95);
-      expect(counters.bar).toBeLessThan((counters.baz / 2) * 1.05);
+      expect(counters.bar / (counters.baz / 2)).toBeGreaterThan(0.99);
+      expect(counters.bar / (counters.baz / 2)).toBeLessThan(1.01);
     });
   });
 
-  describe('with random userIDs', () => {
-    const getRandomID = () =>
+  describe('with random scrambled userIDs', () => {
+    const getRandomString = () =>
       Math.random()
         .toString(36)
         .substring(2);
 
-    it('should show less than 5% deviation in experiment assigments for a 5/10/20 ratio', () => {
+    const getRandomID = () =>
+      `${getRandomString()}${getRandomString()}`.substring(0, 16);
+
+    it('should show less than 1.5% deviation in experiment assigments for a 20/30/50 ratio', () => {
+      const deviation_lower_boundary = 0.985;
+      const deviation_upper_boundary = 1.015;
+
       const createCraps = (user) =>
         new Craps(
           [
             {
-              name: 'foo',
+              name: 'new_shiny_feature',
               hashId: '123abc',
               startDate: yesterday.toISOString(),
               endDate: tomorrow.toISOString(),
               variants: [
                 {
                   variant: 'bar',
-                  ratio: 5,
+                  ratio: 20,
                 },
                 {
                   variant: 'baz',
-                  ratio: 10,
+                  ratio: 30,
                 },
                 {
                   variant: 'qux',
-                  ratio: 20,
+                  ratio: 50,
                 },
               ],
             },
@@ -225,20 +235,32 @@ describe('crabs', () => {
 
       const counters = { bar: 0, baz: 0, qux: 0 };
       for (let i = 0; i < 100000; i++) {
-        const { foo: result } = createCraps({
+        const { new_shiny_feature: result } = createCraps({
           userId: getRandomID(),
         }).getExperiments();
         counters[result]++;
       }
 
-      expect(counters.bar).toBeGreaterThan((counters.baz / 2) * 0.95);
-      expect(counters.bar).toBeLessThan((counters.baz / 2) * 1.05);
+      expect(counters.bar).toBeGreaterThan(
+        (counters.baz / 30) * 20 * deviation_lower_boundary
+      );
+      expect(counters.bar).toBeLessThan(
+        (counters.baz / 30) * 20 * deviation_upper_boundary
+      );
 
-      expect(counters.baz).toBeGreaterThan((counters.qux / 2) * 0.95);
-      expect(counters.baz).toBeLessThan((counters.qux / 2) * 1.05);
+      expect(counters.baz).toBeGreaterThan(
+        (counters.qux / 50) * 30 * deviation_lower_boundary
+      );
+      expect(counters.baz).toBeLessThan(
+        (counters.qux / 50) * 30 * deviation_upper_boundary
+      );
 
-      expect(counters.bar).toBeGreaterThan((counters.qux / 4) * 0.95);
-      expect(counters.bar).toBeLessThan((counters.qux / 4) * 1.05);
+      expect(counters.bar).toBeGreaterThan(
+        (counters.qux / 50) * 20 * deviation_lower_boundary
+      );
+      expect(counters.bar).toBeLessThan(
+        (counters.qux / 50) * 20 * deviation_upper_boundary
+      );
     });
   });
 });
