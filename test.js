@@ -119,7 +119,7 @@ describe('crabs', () => {
     expect(result).toEqual({});
   });
 
-  describe('with increasing plain userIDs', () => {
+  describe('with plain userIDs', () => {
     it('should show less than 1% deviation in experiment assigments for a 50/50 ratio', () => {
       const createCraps = (user) =>
         new Craps(
@@ -193,18 +193,15 @@ describe('crabs', () => {
     });
   });
 
-  describe('with random scrambled userIDs', () => {
-    const getRandomString = () =>
-      Math.random()
-        .toString(36)
-        .substring(2);
-
+  describe('with random userIDs', () => {
     const getRandomID = () =>
-      `${getRandomString()}${getRandomString()}`.substring(0, 16);
+      Math.floor(
+        Math.random() * Math.pow(10, 7 + Math.round(Math.random()))
+      ).toString();
 
-    it('should show less than 1.5% deviation in experiment assigments for a 20/30/50 ratio', () => {
-      const deviation_lower_boundary = 0.985;
-      const deviation_upper_boundary = 1.015;
+    it('should show less than 1.4% deviation in experiment assigments for a 20/30/50 ratio', () => {
+      const deviation_lower_boundary = 0.986;
+      const deviation_upper_boundary = 1.014;
 
       const createCraps = (user) =>
         new Craps(
