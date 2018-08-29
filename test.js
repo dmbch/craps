@@ -199,9 +199,45 @@ describe('crabs', () => {
         Math.random() * Math.pow(10, 7 + Math.round(Math.random()))
       ).toString();
 
-    it('should show less than 1.4% deviation in experiment assigments for a 20/30/50 ratio', () => {
-      const deviation_lower_boundary = 0.986;
-      const deviation_upper_boundary = 1.014;
+    it('should show less than 0.7% deviation in experiment assigments for a 50/50 ratio', () => {
+      const createCraps = (user) =>
+        new Craps(
+          [
+            {
+              name: 'new_shiny_feature',
+              hashId: '123abc',
+              startDate: yesterday.toISOString(),
+              endDate: tomorrow.toISOString(),
+              variants: [
+                {
+                  variant: 'bar',
+                  ratio: 50,
+                },
+                {
+                  variant: 'baz',
+                  ratio: 50,
+                },
+              ],
+            },
+          ],
+          user
+        );
+
+      const counters = { bar: 0, baz: 0 };
+      for (let i = 0; i < 100000; i++) {
+        let { new_shiny_feature: result } = createCraps({
+          userId: getRandomID(),
+        }).getExperiments();
+        counters[result]++;
+      }
+
+      expect(counters.bar / counters.baz).toBeGreaterThan(0.993);
+      expect(counters.bar / counters.baz).toBeLessThan(1.007);
+    });
+
+    it('should show less than 1.2% deviation in experiment assigments for a 20/30/50 ratio', () => {
+      const deviation_lower_boundary = 0.988;
+      const deviation_upper_boundary = 1.012;
 
       const createCraps = (user) =>
         new Craps(
