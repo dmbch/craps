@@ -199,7 +199,10 @@ describe('crabs', () => {
         Math.random() * Math.pow(10, 7 + Math.round(Math.random()))
       ).toString();
 
-    it('should show less than 0.7% deviation in experiment assigments for a 50/50 ratio', () => {
+    it('should show less than 1.5% deviation in experiment assigments for a 50/50 ratio', () => {
+      const deviation_lower_boundary = 0.985;
+      const deviation_upper_boundary = 1.015;
+
       const createCraps = (user) =>
         new Craps(
           [
@@ -231,13 +234,17 @@ describe('crabs', () => {
         counters[result]++;
       }
 
-      expect(counters.bar / counters.baz).toBeGreaterThan(0.993);
-      expect(counters.bar / counters.baz).toBeLessThan(1.007);
+      expect(counters.bar / counters.baz).toBeGreaterThan(
+        deviation_lower_boundary
+      );
+      expect(counters.bar / counters.baz).toBeLessThan(
+        deviation_upper_boundary
+      );
     });
 
-    it('should show less than 1.2% deviation in experiment assigments for a 20/30/50 ratio', () => {
-      const deviation_lower_boundary = 0.988;
-      const deviation_upper_boundary = 1.012;
+    it('should show less than 1.5% deviation in experiment assigments for a 20/30/50 ratio', () => {
+      const deviation_lower_boundary = 0.985;
+      const deviation_upper_boundary = 1.015;
 
       const createCraps = (user) =>
         new Craps(
