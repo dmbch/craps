@@ -34,7 +34,7 @@
           }
         }
       },
-      "required": ["name", "hashId", "variants"],
+      "required": ["name", "variants"],
       "additionalProperties": false
     },
     "condition": {
