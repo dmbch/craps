@@ -4,7 +4,7 @@
   "title": "Craps User",
   "type": "object",
   "properties": {
-    "userId": { "type": "string" }
+    "userId": { "type": ["integer", "string"] }
   },
   "required": ["userId"],
   "additionalProperties": true
