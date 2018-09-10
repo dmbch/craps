@@ -6,9 +6,26 @@
       "title": "Craps Experiment",
       "type": "object",
       "properties": {
-        "id": { "type": "string" },
-        "condition": {
-          "$ref": "#/definitions/condition"
+        "name": {
+          "type": "string",
+          "pattern": "[a-z0-9_]"
+        },
+        "hashId": {
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/condition"
+          }
         },
         "variants": {
           "type": "array",
@@ -17,57 +34,36 @@
           }
         }
       },
-      "required": ["id", "variants"],
+      "required": ["name", "variants"],
       "additionalProperties": false
     },
     "condition": {
       "title": "Craps Experiment Condition",
-      "oneOf": [
-        {
-          "type": "object",
-          "properties": {
-            "operator": {
-              "type": "string",
-              "enum": ["&", "-", "|", "^"]
-            },
-            "conditions": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/condition"
-              }
-            }
-          },
-          "required": ["operator", "conditions"],
-          "additionalProperties": false
+      "type": "object",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "enum": ["=", "!", "<", ">"]
         },
-        {
-          "type": "object",
-          "properties": {
-            "operator": {
-              "type": "string",
-              "enum": ["=", "!", "<", ">"]
-            },
-            "key": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "oneOf": [
+            {
               "type": "string"
             },
-            "value": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
             }
-          },
-          "required": ["operator", "key", "value"],
-          "additionalProperties": false
+          ]
         }
-      ]
+      },
+      "required": ["operator", "key", "value"],
+      "additionalProperties": false
     },
     "variant": {
       "title": "Craps Variant",
@@ -75,11 +71,15 @@
       "properties": {
         "ratio": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 100
         },
-        "payload": {}
+        "variant": {
+          "type": "string",
+          "pattern": "[a-z0-9_]"
+        }
       },
-      "required": ["ratio", "payload"],
+      "required": ["ratio", "variant"],
       "additionalProperties": false
     }
   },

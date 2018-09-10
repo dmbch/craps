@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "main": "index.js",
   "scripts": {
-    "test": "ava --verbose",
+    "test": "jest --verbose",
     "lint": "eslint --ignore-path .gitignore '**/*.js'",
     "fmt": "prettier --write --ignore-path .gitignore '**/*.js'",
     "release": "standard-version",
@@ -28,6 +28,7 @@
   "homepage": "https://github.com/dmbch/craps#readme",
   "dependencies": {
     "ajv": "^6.5.2",
+    "big-integer": "^1.6.34",
     "flat": "^4.1.0",
     "string-hash": "^1.1.3"
   },
@@ -35,13 +36,13 @@
     "@commitlint/cli": "^7.0.0",
     "@commitlint/config-conventional": "^7.0.0",
     "@commitlint/travis-cli": "^7.0.0",
-    "ava": "^0.25.0",
     "babel-eslint": "^8.2.5",
     "cz-conventional-changelog": "^2.1.0",
     "eslint": "^5.0.0",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-prettier": "^2.6.0",
     "husky": "^0.14.3",
+    "jest": "^23.5.0",
     "lint-staged": "^7.0.0",
     "prettier": "^1.13.4",
     "standard-version": "^4.2.0"

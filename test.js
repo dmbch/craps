@@ -1,163 +1,306 @@
+/* eslint-env node, jest */
 'use strict';
-
-const test = require('ava');
 
 const Craps = require('./index');
 
-const getRandomID = () =>
-  Math.random()
-    .toString(36)
-    .substring(2);
+describe('crabs', () => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
 
-test('argument validation', (t) => {
-  t.throws(() => new Craps());
-  t.throws(() => new Craps({}));
-  t.throws(() => new Craps([]));
-  t.throws(() => new Craps([], {}));
-  t.throws(() => new Craps([{}], { id: '' }));
-});
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
 
-test('unconditional dice roll', (t) => {
-  const craps = new Craps(
-    [
-      {
-        id: 'foo',
-        variants: [
-          {
-            ratio: 1,
-            payload: 'bar',
-          },
-        ],
-      },
-    ],
-    {
-      id: '123',
-    }
-  );
-  const { foo: result } = craps.roll();
-  t.is(result.id, 'foo[0]');
-  t.is(result.payload, 'bar');
-});
+  it('should validate constrcutor arguments', () => {
+    expect(() => {
+      new Craps();
+    }).toThrow();
+    expect(() => {
+      new Craps({});
+    }).toThrow();
+    expect(() => {
+      new Craps([]);
+    }).toThrow();
+    expect(() => {
+      new Craps([], {});
+    }).toThrow();
+    expect(() => {
+      new Craps([{}], { name: '' });
+    }).toThrow();
+  });
 
-test('conditional dice roll', (t) => {
-  const createCraps = (user) =>
-    new Craps(
+  it('should assign the user to an experiment without conditions', () => {
+    const craps = new Craps(
       [
         {
-          id: 'foo',
-          condition: {
-            operator: '=',
-            key: 'baz',
-            value: 'qux',
-          },
+          name: 'new_shiny_feature',
+          hashId: '123abc',
+          startDate: yesterday.toISOString(),
+          endDate: tomorrow.toISOString(),
           variants: [
             {
+              variant: 'test',
               ratio: 1,
-              payload: 'bar',
             },
           ],
         },
       ],
-      user
+      {
+        userId: '123',
+      }
     );
-  const { foo: result1 } = createCraps({ id: '1', baz: 'qux' }).roll();
-  const { foo: result2 } = createCraps({ id: '1', baz: 'quux' }).roll();
-  t.is(result1.id, 'foo[0]');
-  t.is(result1.payload, 'bar');
-  t.is(result2, undefined);
-});
 
-test('consecutive fairness', (t) => {
-  const createCraps = (user) =>
-    new Craps(
+    const result = craps.getExperiments();
+    expect(result).toEqual({ new_shiny_feature: 'test' });
+  });
+
+  it('should assign the user to an experiment with matching conditions', () => {
+    const craps = new Craps(
       [
         {
-          id: 'foo',
+          name: 'new_shiny_feature',
+          hashId: '123abc',
+          startDate: yesterday.toISOString(),
+          endDate: tomorrow.toISOString(),
+          conditions: [
+            {
+              operator: '=',
+              key: 'baz',
+              value: 'qux',
+            },
+          ],
           variants: [
             {
-              ratio: 5,
-              payload: 'bar',
-            },
-            {
-              ratio: 10,
-              payload: 'baz',
+              variant: 'test',
+              ratio: 100,
             },
           ],
         },
       ],
-      user
+      {
+        userId: '123',
+        baz: 'qux',
+      }
     );
-  const counters = { bar: 0, baz: 0 };
-  for (let i = 0; i < 100000; i++) {
-    let { foo: result } = createCraps({ id: `${i}` }).roll();
-    counters[result.payload]++;
-  }
-  t.true(counters.bar > (counters.baz / 2) * 0.95);
-  t.true(counters.bar < (counters.baz / 2) * 1.05);
-});
 
-test('random fairness', (t) => {
-  const createCraps = (user) =>
-    new Craps(
+    const result = craps.getExperiments();
+    expect(result).toEqual({ new_shiny_feature: 'test' });
+  });
+
+  it('should not assign the user to an experiment with not matching conditions', () => {
+    const craps = new Craps(
       [
         {
-          id: 'foo',
+          name: 'new_shiny_feature',
+          hashId: '123abc',
+          startDate: yesterday.toISOString(),
+          endDate: tomorrow.toISOString(),
+          conditions: [
+            {
+              operator: '=',
+              key: 'baz',
+              value: 'qux',
+            },
+          ],
           variants: [
             {
-              ratio: 5,
-              payload: 'bar',
-            },
-            {
-              ratio: 10,
-              payload: 'baz',
+              variant: 'test',
+              ratio: 100,
             },
           ],
         },
       ],
-      user
+      {
+        userId: '123',
+        baz: 'something_different',
+      }
     );
-  const counters = { bar: 0, baz: 0 };
-  for (let i = 0; i < 100000; i++) {
-    const { foo: result } = createCraps({ id: getRandomID() }).roll();
-    counters[result.payload]++;
-  }
-  t.true(counters.bar > (counters.baz / 2) * 0.95);
-  t.true(counters.bar < (counters.baz / 2) * 1.05);
-});
 
-test('multi random fairness', (t) => {
-  const createCraps = (user) =>
-    new Craps(
-      [
-        {
-          id: 'foo',
-          variants: [
+    const result = craps.getExperiments();
+    expect(result).toEqual({});
+  });
+
+  describe('with plain userIDs', () => {
+    it('should show less than 1% deviation in experiment assigments for a 50/50 ratio', () => {
+      const createCraps = (user) =>
+        new Craps(
+          [
             {
-              ratio: 5,
-              payload: 'bar',
-            },
-            {
-              ratio: 10,
-              payload: 'baz',
-            },
-            {
-              ratio: 20,
-              payload: 'qux',
+              name: 'new_shiny_feature',
+              hashId: '123abc',
+              startDate: yesterday.toISOString(),
+              endDate: tomorrow.toISOString(),
+              variants: [
+                {
+                  variant: 'bar',
+                  ratio: 50,
+                },
+                {
+                  variant: 'baz',
+                  ratio: 50,
+                },
+              ],
             },
           ],
-        },
-      ],
-      user
-    );
-  const counters = { bar: 0, baz: 0, qux: 0 };
-  for (let i = 0; i < 100000; i++) {
-    const { foo: result } = createCraps({ id: getRandomID() }).roll();
-    counters[result.payload]++;
-  }
-  t.true(counters.bar > (counters.baz / 2) * 0.95);
-  t.true(counters.bar < (counters.baz / 2) * 1.05);
-  t.true(counters.baz > (counters.qux / 2) * 0.95);
-  t.true(counters.baz < (counters.qux / 2) * 1.05);
-  t.true(counters.bar > (counters.qux / 4) * 0.95);
-  t.true(counters.bar < (counters.qux / 4) * 1.05);
+          user
+        );
+
+      const counters = { bar: 0, baz: 0 };
+      for (let i = 0; i < 100000; i++) {
+        let { new_shiny_feature: result } = createCraps({
+          userId: `${i}`,
+        }).getExperiments();
+        counters[result]++;
+      }
+
+      expect(counters.bar / counters.baz).toBeGreaterThan(0.99);
+      expect(counters.bar / counters.baz).toBeLessThan(1.01);
+    });
+
+    it('should show less than 1% deviation in experiment assigments for a 5/10 ratio', () => {
+      const createCraps = (user) =>
+        new Craps(
+          [
+            {
+              name: 'new_shiny_feature',
+              hashId: '123abc',
+              startDate: yesterday.toISOString(),
+              endDate: tomorrow.toISOString(),
+              variants: [
+                {
+                  variant: 'bar',
+                  ratio: 5,
+                },
+                {
+                  variant: 'baz',
+                  ratio: 10,
+                },
+              ],
+            },
+          ],
+          user
+        );
+
+      const counters = { bar: 0, baz: 0 };
+      for (let i = 0; i < 100000; i++) {
+        let { new_shiny_feature: result } = createCraps({
+          userId: `${i}`,
+        }).getExperiments();
+        counters[result]++;
+      }
+
+      expect(counters.bar / (counters.baz / 2)).toBeGreaterThan(0.99);
+      expect(counters.bar / (counters.baz / 2)).toBeLessThan(1.01);
+    });
+  });
+
+  describe('with random userIDs', () => {
+    const getRandomID = () =>
+      Math.floor(
+        Math.random() * Math.pow(10, 7 + Math.round(Math.random()))
+      ).toString();
+
+    it('should show less than 1.5% deviation in experiment assigments for a 50/50 ratio', () => {
+      const deviation_lower_boundary = 0.985;
+      const deviation_upper_boundary = 1.015;
+
+      const createCraps = (user) =>
+        new Craps(
+          [
+            {
+              name: 'new_shiny_feature',
+              hashId: '123abc',
+              startDate: yesterday.toISOString(),
+              endDate: tomorrow.toISOString(),
+              variants: [
+                {
+                  variant: 'bar',
+                  ratio: 50,
+                },
+                {
+                  variant: 'baz',
+                  ratio: 50,
+                },
+              ],
+            },
+          ],
+          user
+        );
+
+      const counters = { bar: 0, baz: 0 };
+      for (let i = 0; i < 100000; i++) {
+        let { new_shiny_feature: result } = createCraps({
+          userId: getRandomID(),
+        }).getExperiments();
+        counters[result]++;
+      }
+
+      expect(counters.bar / counters.baz).toBeGreaterThan(
+        deviation_lower_boundary
+      );
+      expect(counters.bar / counters.baz).toBeLessThan(
+        deviation_upper_boundary
+      );
+    });
+
+    it('should show less than 1.5% deviation in experiment assigments for a 20/30/50 ratio', () => {
+      const deviation_lower_boundary = 0.985;
+      const deviation_upper_boundary = 1.015;
+
+      const createCraps = (user) =>
+        new Craps(
+          [
+            {
+              name: 'new_shiny_feature',
+              hashId: '123abc',
+              startDate: yesterday.toISOString(),
+              endDate: tomorrow.toISOString(),
+              variants: [
+                {
+                  variant: 'bar',
+                  ratio: 20,
+                },
+                {
+                  variant: 'baz',
+                  ratio: 30,
+                },
+                {
+                  variant: 'qux',
+                  ratio: 50,
+                },
+              ],
+            },
+          ],
+          user
+        );
+
+      const counters = { bar: 0, baz: 0, qux: 0 };
+      for (let i = 0; i < 100000; i++) {
+        const { new_shiny_feature: result } = createCraps({
+          userId: getRandomID(),
+        }).getExperiments();
+        counters[result]++;
+      }
+
+      expect(counters.bar).toBeGreaterThan(
+        (counters.baz / 30) * 20 * deviation_lower_boundary
+      );
+      expect(counters.bar).toBeLessThan(
+        (counters.baz / 30) * 20 * deviation_upper_boundary
+      );
+
+      expect(counters.baz).toBeGreaterThan(
+        (counters.qux / 50) * 30 * deviation_lower_boundary
+      );
+      expect(counters.baz).toBeLessThan(
+        (counters.qux / 50) * 30 * deviation_upper_boundary
+      );
+
+      expect(counters.bar).toBeGreaterThan(
+        (counters.qux / 50) * 20 * deviation_lower_boundary
+      );
+      expect(counters.bar).toBeLessThan(
+        (counters.qux / 50) * 20 * deviation_upper_boundary
+      );
+    });
+  });
 });
